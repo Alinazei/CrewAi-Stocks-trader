@@ -1,0 +1,1 @@
+# CrewAi-Stocks-trader
