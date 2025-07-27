@@ -175,12 +175,7 @@ GROQ_API_KEY=your_groq_api_key
 ```bash
 # 🚀 Agent Zero Style Chat (RECOMMENDED)
 python agent_zero_chat.py
-
-# Simple conversational chat
-python simple_chat.py
-
-# Advanced chat interface
-python interactive_chat.py
+start the main agents ,then to run the crew @team
 ```
 
 **🚀 Agent Zero Style Chat Features:**
@@ -210,29 +205,20 @@ python interactive_chat.py
 # 1. Run the setup script
 python setup_ollama.py
 
-# 2. Start trading (demo mode)
-python main.py
-
 # 3. Or start the Agent Zero style chat (RECOMMENDED)
 python agent_zero_chat.py
 ```
 
 ### Basic Usage
 ```bash
-python
+
 ```
 
 By default, this will analyze and potentially trade Tesla (TSLA) stock.
 
 **First run with Ollama**: May take 30-60 seconds as the model loads into memory.
 
-### Trading Different Stocks
-Edit `main.py` to change the stock:
-```python
-if __name__ == "__main__":
-    run("AAPL")    # For Apple
-    run("GOOGL")   # For Google
-    run("MSFT")    # For Microsoft
+
 ```
 
 ### Safety Modes
@@ -526,41 +512,9 @@ show my positions
 - **Perfect for**: General stock analysis and basic interaction
 
 ```bash
-python simple_chat.py
+
 ```
 
-**Example conversation:**
-```
-💬 You: analyze TSLA
-🤖 AI Trading Team: [Comprehensive TSLA analysis with recommendations]
-
-💬 You: what do you think about AAPL?
-🤖 AI Trading Team: [AI opinion on Apple stock with technical analysis]
-
-💬 You: should I buy NVDA?
-🤖 AI Trading Team: [Trading recommendation with risk assessment]
-```
-
-#### 2. Advanced Chat (`interactive_chat.py`)
-- **Full featured**: Specialized agents for different types of queries
-- **Advanced routing**: Commands automatically go to the right agent
-- **Trading capabilities**: Execute trades through natural language
-
-```bash
-python interactive_chat.py
-```
-
-**Example conversation:**
-```
-💬 You: buy 100 shares of AAPL
-🤖 AI Agent: [Checks balance, analyzes AAPL, executes trade with confirmations]
-
-💬 You: show my positions
-🤖 AI Agent: [Displays current portfolio with P&L]
-
-💬 You: what's the market sentiment?
-🤖 AI Agent: [Provides market overview with sentiment analysis]
-```
 
 ### Natural Language Commands
 
