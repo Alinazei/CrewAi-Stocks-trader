@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrewAI Stock Trader Chat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            color: white;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .new-chat-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .sessions-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .session-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .session-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .session-item.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-left: 4px solid #667eea;
+        }
+
+        .session-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .session-meta {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 1rem;
+            border-radius: 12px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .message.agent {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .message.error {
+            align-self: flex-start;
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .message.processing {
+            align-self: flex-start;
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .message-content {
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+        }
+
+        .chat-input-container {
+            padding: 1.5rem 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-size: 1rem;
+            resize: none;
+            min-height: 50px;
+            max-height: 150px;
+        }
+
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .send-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s;
+            min-width: 80px;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.5rem 2rem;
+            font-size: 0.9rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .connection-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .connection-status.connected {
+            background: #4caf50;
+        }
+
+        .connection-status.disconnected {
+            background: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 CrewAI Stock Trader Chat</h1>
+        <p>Real-time chat with your AI trading agents</p>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" onclick="createNewSession()">💬 New Chat</button>
+                <h3>Chat Sessions</h3>
+            </div>
+            <div class="sessions-list" id="sessionsList">
+                <!-- Sessions will be loaded here -->
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    💬 Welcome to CrewAI Stock Trader Chat!<br>
+                    Start a new conversation or load an existing session.
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <form class="chat-input-form" id="chatForm">
+                    <textarea 
+                        class="chat-input" 
+                        id="messageInput" 
+                        placeholder="Type your message here... (e.g., 'increase portfolio gains by 20%', 'analyze NIO stock', 'check market status')"
+                        rows="1"
+                    ></textarea>
+                    <button type="submit" class="send-btn" id="sendBtn">📤 Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span class="connection-status" id="connectionStatus"></span>
+        <span id="statusText">Connecting...</span>
+    </div>
+
+    <script>
+        // Initialize Socket.IO
+        const socket = io();
+        let currentSessionId = null;
+        let isConnected = false;
+
+        // DOM elements
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatForm = document.getElementById('chatForm');
+        const sessionsList = document.getElementById('sessionsList');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const statusText = document.getElementById('statusText');
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        // Handle form submission
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+
+        // Handle Enter key (send on Enter, new line on Shift+Enter)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || !isConnected) return;
+
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+
+            // Send message via Socket.IO
+            socket.emit('send_message', {
+                session_id: currentSessionId,
+                message: message
+            });
+        }
+
+        function createNewSession() {
+            socket.emit('new_session');
+        }
+
+        function loadSession(sessionId) {
+            socket.emit('load_session', { session_id: sessionId });
+        }
+
+        function addMessage(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.type}`;
+            messageDiv.id = message.id;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = message.content;
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date(message.timestamp).toLocaleTimeString();
+
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(timeDiv);
+
+            // Remove welcome message if it exists
+            const welcomeMessage = chatMessages.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateSessionsList(sessions) {
+            sessionsList.innerHTML = '';
+            sessions.forEach(session => {
+                const sessionDiv = document.createElement('div');
+                sessionDiv.className = 'session-item';
+                if (session.id === currentSessionId) {
+                    sessionDiv.classList.add('active');
+                }
+
+                sessionDiv.innerHTML = `
+                    <div class="session-title">Chat Session</div>
+                    <div class="session-meta">
+                        ${new Date(session.created_at).toLocaleDateString()} - ${session.message_count} messages
+                    </div>
+                `;
+
+                sessionDiv.addEventListener('click', () => loadSession(session.id));
+                sessionsList.appendChild(sessionDiv);
+            });
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        // Socket.IO event handlers
+        socket.on('connect', function() {
+            isConnected = true;
+            connectionStatus.className = 'connection-status connected';
+            statusText.textContent = 'Connected';
+            loadSessions();
+        });
+
+        socket.on('disconnect', function() {
+            isConnected = false;
+            connectionStatus.className = 'connection-status disconnected';
+            statusText.textContent = 'Disconnected';
+        });
+
+        socket.on('connected', function(data) {
+            console.log('Connected to server:', data.message);
+        });
+
+        socket.on('new_session', function(data) {
+            currentSessionId = data.session_id;
+            chatMessages.innerHTML = '<div class="welcome-message">💬 New chat session started!</div>';
+            loadSessions();
+        });
+
+        socket.on('session_loaded', function(data) {
+            currentSessionId = data.session_id;
+            chatMessages.innerHTML = '';
+            
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(message => addMessage(message));
+            } else {
+                chatMessages.innerHTML = '<div class="welcome-message">💬 Chat session loaded!</div>';
+            }
+            
+            loadSessions();
+        });
+
+        socket.on('message', function(message) {
+            if (message.status === 'processing') {
+                showTypingIndicator();
+            } else {
+                hideTypingIndicator();
+            }
+            addMessage(message);
+        });
+
+        socket.on('error', function(data) {
+            addMessage({
+                id: Date.now(),
+                type: 'error',
+                content: data.message,
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        // Load sessions from API
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions');
+                const sessions = await response.json();
+                updateSessionsList(sessions);
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
+
+        // Initial load
+        loadSessions();
+    </script>
+</body>
+</html> 

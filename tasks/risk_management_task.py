@@ -1,0 +1,62 @@
+from crewai import Task
+from agents.risk_management_agent import create_risk_management_agent
+
+risk_assessment_task = Task(
+    description=(
+        "Perform comprehensive risk assessment for the portfolio and specific stock: {stock}. "
+        "Coordinate with other agents to gather relevant information and provide risk management recommendations:\n"
+        "1. **Portfolio Risk Analysis**: Assess current portfolio risk exposure across all positions\n"
+        "2. **Position Sizing**: Calculate optimal position sizes based on risk tolerance\n"
+        "3. **Correlation Analysis**: Analyze correlation risks between holdings\n"
+        "4. **Volatility Assessment**: Evaluate volatility exposure and market risk\n"
+        "5. **Extended Hours Risk**: Assess additional risks from extended hours trading\n"
+        "6. **News Sentiment Risk**: Evaluate sentiment-based risks and market shocks\n"
+        "7. **Stop Loss Recommendations**: Provide dynamic stop loss levels\n"
+        "8. **Risk Mitigation Strategies**: Suggest hedging and risk reduction approaches\n"
+        "9. **Emergency Protocols**: Define emergency exit strategies\n"
+        "10. **Risk Monitoring**: Set up ongoing risk monitoring parameters\n"
+        "\n"
+        "**RISK MANAGEMENT FRAMEWORK:**\n"
+        "- Maximum portfolio risk: 2% Value at Risk (VaR) per day\n"
+        "- Position limits: No single position > 10% of portfolio\n"
+        "- Sector concentration: Maximum 25% in any single sector\n"
+        "- Correlation limits: Avoid positions with >0.7 correlation\n"
+        "- Volatility limits: Monitor and limit high-volatility exposure\n"
+        "- Drawdown limits: Maximum 5% portfolio drawdown before intervention\n"
+        "- Liquidity requirements: Maintain 20% cash buffer\n"
+        "- Extended hours: Reduce position sizes for overnight risk"
+    ),
+    expected_output=(
+        "A comprehensive risk management report including:\n"
+        "**PORTFOLIO RISK METRICS:**\n"
+        "- Current portfolio Value at Risk (VaR)\n"
+        "- Position concentration analysis\n"
+        "- Sector and geographic diversification assessment\n"
+        "- Correlation matrix of current holdings\n"
+        "- Volatility exposure breakdown\n"
+        "- Maximum drawdown analysis\n"
+        "\n"
+        "**POSITION-SPECIFIC RISK ANALYSIS:**\n"
+        "- Individual position risk contribution\n"
+        "- Optimal position sizing recommendations\n"
+        "- Stock-specific risk factors\n"
+        "- Extended hours risk assessment\n"
+        "- News sentiment risk evaluation\n"
+        "\n"
+        "**RISK MITIGATION RECOMMENDATIONS:**\n"
+        "- Dynamic stop loss levels with rationale\n"
+        "- Position size adjustments\n"
+        "- Hedging strategies if applicable\n"
+        "- Portfolio rebalancing suggestions\n"
+        "- Risk reduction priorities\n"
+        "\n"
+        "**MONITORING AND ALERTS:**\n"
+        "- Real-time risk monitoring setup\n"
+        "- Risk threshold alerts\n"
+        "- Emergency exit protocols\n"
+        "- Risk reporting schedule\n"
+        "- Escalation procedures for risk breaches"
+    ),
+    agent=create_risk_management_agent(),
+    max_execution_time=180  # Reduced from 300s for faster execution
+) 
